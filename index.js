@@ -91,3 +91,16 @@ app.use("/uploads", express.static("uploads"));
 app.listen(port, () => {
   console.log(`🌐 Servidor rodando em http://localhost:${port}`);
 });
+
+
+// Rota para listar todos os pesqueiros
+app.get("/pesqueiros", (req, res) => {
+  const sql = "SELECT id, nome, endereco, telefone FROM pesqueiros";
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar pesqueiros:", err);
+      return res.status(500).json({ erro: "Erro ao buscar pesqueiros." });
+    }
+    res.json(results);
+  });
+});

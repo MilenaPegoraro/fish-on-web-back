@@ -1,65 +1,93 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const mysql = require('mysql2');
+import express from "express";
+import mysql from "mysql2";
+import cors from "cors";
+import multer from "multer";
+import path from "path";
+
 
 const app = express();
-app.use(bodyParser.json());
+const port = 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
 
 // Conexão com MySQL
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'cafezinho', // substitua pela senha do root
-  database: 'banco_qualquer'
+  host: "localhost",
+  user: "root",
+  password: "cafezinho", 
+  database: "fishon"
 });
 
 db.connect(err => {
   if (err) {
-    console.error('Erro ao conectar ao MySQL:', err);
+    console.error("Erro ao conectar ao MySQL:", err);
     return;
   }
-  console.log('✅ Conectado ao MySQL!');
+  console.log("✅ Conectado ao MySQL!");
 });
 
-// ===== ROTAS =====
+// Configuração do multer
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    cb(null, "uploads/"); // pasta onde os arquivos serão salvos
+  },
+  filename: function(req, file, cb) {
+    const ext = path.extname(file.originalname);
+    cb(null, Date.now() + ext);
+  }
+});
+const upload = multer({ storage: storage });
 
-// Listar todos os usuários
-app.get('/usuarios', (req, res) => {
-  db.query('SELECT * FROM usuarios', (err, results) => {
-    if (err) return res.status(500).json(err);
-    res.json(results);
+
+
+
+// Rota de cadastro de pescador
+app.post("/pescadores", (req, res) => {
+  const { nome, email, senha } = req.body;
+
+  if (!nome || !email || !senha) {
+    return res.status(400).json({ erro: "Preencha todos os campos!" });
+  }
+
+  const sql = "INSERT INTO pescadores (nome, email, senha) VALUES (?, ?, ?)";
+  db.query(sql, [nome, email, senha], (err, result) => {
+    if (err) {
+      console.error("Erro ao cadastrar:", err);
+      return res.status(500).json({ erro: "Erro no servidor." });
+    }
+    res.json({ mensagem: "Pescador cadastrado com sucesso!", id: result.insertId });
   });
 });
 
-// Criar um usuário
-app.post('/usuarios', (req, res) => {
-  const { nome, email } = req.body;
-  db.query('INSERT INTO usuarios (nome, email) VALUES (?, ?)', [nome, email], (err, result) => {
-    if (err) return res.status(500).json(err);
-    res.json({ id: result.insertId, nome, email });
+// Rota de cadastro de pesqueiro
+app.post("/pesqueiros", upload.single("alvara"), (req, res) => {
+  const { nome, email, cnpj, endereco, telefone, senha } = req.body;
+  const alvara = req.file ? req.file.filename : null;
+
+  if (!nome || !email || !cnpj || !endereco || !telefone || !senha || !alvara) {
+    return res.status(400).json({ erro: "Preencha todos os campos!" });
+  }
+
+  const sql = `INSERT INTO pesqueiros 
+    (nome, email, cnpj, endereco, telefone, alvara, senha)
+    VALUES (?, ?, ?, ?, ?, ?, ?)`;
+
+  db.query(sql, [nome, email, cnpj, endereco, telefone, alvara, senha], (err, result) => {
+    if (err) {
+      console.error("Erro ao cadastrar pesqueiro:", err);
+      return res.status(500).json({ erro: "Erro no servidor." });
+    }
+    res.json({ mensagem: "Pesqueiro cadastrado com sucesso!", id: result.insertId });
   });
 });
 
-// Atualizar um usuário
-app.put('/usuarios/:id', (req, res) => {
-  const { id } = req.params;
-  const { nome, email } = req.body;
-  db.query('UPDATE usuarios SET nome=?, email=? WHERE id=?', [nome, email, id], (err) => {
-    if (err) return res.status(500).json(err);
-    res.json({ message: 'Usuário atualizado!' });
-  });
-});
+//Acessar os arquivos do alvará
+app.use("/uploads", express.static("uploads"));
 
-// Deletar um usuário
-app.delete('/usuarios/:id', (req, res) => {
-  const { id } = req.params;
-  db.query('DELETE FROM usuarios WHERE id=?', [id], (err) => {
-    if (err) return res.status(500).json(err);
-    res.json({ message: 'Usuário deletado!' });
-  });
-});
 
-// Iniciar servidor
-app.listen(3000, () => {
-  console.log('🌐 Servidor rodando em http://localhost:3000');
+
+app.listen(port, () => {
+  console.log(`🌐 Servidor rodando em http://localhost:${port}`);
 });

@@ -1,32 +1,64 @@
 async function validCadasPesqueiro() {
-  const nome = document.getElementById("nome-pesqueiro").value;
-  const email = document.getElementById("email-pesqueiro").value;
-  const cnpj = document.getElementById("cnpj-pesqueiro").value;
-  const endereco = document.getElementById("endereco-pesqueiro").value;
-  const telefone = document.getElementById("telefone-pesqueiro").value;
+  const nome = document.getElementById("nome-pesqueiro").value.trim();
+  const email = document.getElementById("email-pesqueiro").value.trim();
+  const cnpj = document.getElementById("cnpj-pesqueiro").value.trim();
+  const endereco = document.getElementById("endereco-pesqueiro").value.trim();
+  const telefone = document.getElementById("telefone-pesqueiro").value.trim();
   const senha = document.getElementById("senha").value;
   const confirmarSenha = document.getElementById("confirmar-senha").value;
-  const alvaraInput = document.getElementById("alvara-pesqueiro");
-  const alvara = alvaraInput.files.length > 0 ? alvaraInput.files[0] : null;
+  const alvara = document.getElementById("alvara-pesqueiro").files[0];
   const mensagem = document.getElementById("mensagem");
 
-  // Validação básica
-  if (!nome || !email || !cnpj || !endereco || !telefone || !senha || !confirmarSenha) {
-    mensagem.innerHTML = "<p style='color:red'>Preencha todos os campos!</p>";
+  // Limpa mensagem anterior
+  mensagem.innerHTML = "";
+// comentário qualquer .
+  // 1️⃣ Campos obrigatórios
+  if (!nome || !email || !cnpj || !endereco || !telefone || !senha || !confirmarSenha || !alvara) {
+    mensagem.innerHTML = "<p style='color:red'>Preencha todos os campos e anexe o alvará!</p>";
     return;
   }
 
-  if (!alvara) {
-    mensagem.innerHTML = "<p style='color:red'>Anexe o alvará!</p>";
+  // 2️⃣ Nome válido (apenas letras e mínimo 3 caracteres)
+  const nomeRegex = /^[A-Za-zÀ-ú\s]{3,}$/;
+  if (!nomeRegex.test(nome)) {
+    mensagem.innerHTML = "<p style='color:red'>Nome inválido. Apenas letras e mínimo 3 caracteres.</p>";
     return;
   }
 
+  // 3️⃣ Email válido
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    mensagem.innerHTML = "<p style='color:red'>E-mail inválido.</p>";
+    return;
+  }
+
+  // 4️⃣ CNPJ válido (somente números, 14 dígitos)
+  const cnpjRegex = /^\d{14}$/;
+  if (!cnpjRegex.test(cnpj)) {
+    mensagem.innerHTML = "<p style='color:red'>CNPJ inválido. Deve conter 14 números.</p>";
+    return;
+  }
+
+  // 5️⃣ Telefone válido (apenas números, mínimo 10 dígitos)
+  const telefoneRegex = /^\d{10,11}$/;
+  if (!telefoneRegex.test(telefone)) {
+    mensagem.innerHTML = "<p style='color:red'>Telefone inválido. Apenas números e 10-11 dígitos.</p>";
+    return;
+  }
+
+  // 6️⃣ Senha mínima 6 caracteres
+  if (senha.length < 6) {
+    mensagem.innerHTML = "<p style='color:red'>A senha deve ter no mínimo 6 caracteres.</p>";
+    return;
+  }
+
+  // 7️⃣ Senhas coincidem
   if (senha !== confirmarSenha) {
     mensagem.innerHTML = "<p style='color:red'>As senhas não coincidem!</p>";
     return;
   }
 
-  // Enviar formulário com arquivo
+  // 8️⃣ FormData para envio (incluindo arquivo)
   const formData = new FormData();
   formData.append("nome", nome);
   formData.append("email", email);
@@ -35,7 +67,6 @@ async function validCadasPesqueiro() {
   formData.append("telefone", telefone);
   formData.append("senha", senha);
   formData.append("alvara", alvara);
-
 
   try {
     const resposta = await fetch("http://localhost:3000/pesqueiros", {

@@ -41,7 +41,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 
-//ROTAS ABAIXO
+
 
 // Rota de cadastro de pescador
 app.post("/pescadores", (req, res) => {
@@ -86,45 +86,6 @@ app.post("/pesqueiros", upload.single("alvara"), (req, res) => {
 //Acessar os arquivos do alvará
 app.use("/uploads", express.static("uploads"));
 
-// Rota de Login
-app.post("/login", (req, res) => {
-  const { email, senha } = req.body;
-
-  if (!email || !senha) {
-    return res.status(400).json({ erro: "Preencha todos os campos!" });
-  }
-
-  // Verificar login em pescadores
-  const sqlPescador = "SELECT * FROM pescadores WHERE email = ? AND senha = ?";
-  db.query(sqlPescador, [email, senha], (err, rowsPescador) => {
-    if (err) {
-      console.error("Erro ao logar pescador:", err);
-      return res.status(500).json({ erro: "Erro no servidor." });
-    }
-
-    if (rowsPescador.length > 0) {
-      return res.json({ mensagem: "Login realizado com sucesso!", tipo: "pescador" });
-    }
-
-    // Se não achar pescador, verifica pesqueiro
-    const sqlPesqueiro = "SELECT * FROM pesqueiros WHERE email = ? AND senha = ?";
-    db.query(sqlPesqueiro, [email, senha], (err, rowsPesqueiro) => {
-      if (err) {
-        console.error("Erro ao logar pesqueiro:", err);
-        return res.status(500).json({ erro: "Erro no servidor." });
-      }
-
-      if (rowsPesqueiro.length > 0) {
-        return res.json({ mensagem: "Login realizado com sucesso!", tipo: "pesqueiro" });
-      }
-
-      // Nenhum usuário encontrado
-      return res.status(401).json({ erro: "E-mail ou senha inválidos!" });
-    });
-  });
-});
-
-
 
 
 app.listen(port, () => {
@@ -142,8 +103,4 @@ app.get("/pesqueiros", (req, res) => {
     }
     res.json(results);
   });
-<<<<<<< HEAD
 });
-=======
-});
->>>>>>> a494a0f (login funcionando)
